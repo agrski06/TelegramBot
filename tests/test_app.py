@@ -217,49 +217,6 @@ class TestFlaskApp:
                 assert mock_tw_manager.fetch_home_timeline.call_count == 2
 
     @patch('src.app.bot')
-    def test_handle_login_already_logged_in(self, mock_bot):
-        """Test /login handler when user already logged in"""
-        with patch('src.db.database.DB_PATH', self.path):
-            from src.db.database import init_db, save_user_tokens
-            from src.app import handle_login
-
-            init_db()
-            # Save user token
-            save_user_tokens("123456", "test_token", None, None)
-
-            from unittest.mock import MagicMock
-            mock_message = MagicMock()
-            mock_message.chat.id = 123456
-
-            handle_login(mock_message)
-
-            # Verify message about already being logged in
-            mock_bot.send_message.assert_called_once()
-            call_args = mock_bot.send_message.call_args
-            assert "already logged in" in call_args[0][1]
-
-    @patch('src.app.bot')
-    def test_handle_login_new_user(self, mock_bot):
-        """Test /login handler for new user"""
-        with patch('src.db.database.DB_PATH', self.path):
-            from src.db.database import init_db
-            from src.app import handle_login
-
-            init_db()
-
-            with patch.dict('os.environ', {'BASE_URL': 'http://localhost:5000'}):
-                from unittest.mock import MagicMock
-                mock_message = MagicMock()
-                mock_message.chat.id = 123456
-
-                handle_login(mock_message)
-
-                # Verify auth URL was sent
-                mock_bot.send_message.assert_called_once()
-                call_args = mock_bot.send_message.call_args
-                assert "http://localhost:5000/auth/123456" in call_args[0][1]
-
-    @patch('src.app.bot')
     def test_callback_token_without_expires_in(self, mock_bot, client):
         """Test callback handling token without expires_in field"""
         with patch('src.db.database.DB_PATH', self.path):

@@ -62,7 +62,7 @@ class TestBotLogic:
         mock_bot.send_message.assert_called_once()
 
     @patch('src.db.database.DB_PATH', '/tmp/test.db')
-    @patch('src.bot.handlers.user_exists')
+    @patch('src.db.database.user_exists')
     @patch('src.bot.handlers.bot')
     def test_login_command_already_logged_in(self, mock_bot, mock_user_exists, mock_message):
         """Test /login command when user is already logged in"""
@@ -78,7 +78,7 @@ class TestBotLogic:
         assert "already logged in" in call_args[0][1]
 
     @patch('src.db.database.DB_PATH', '/tmp/test.db')
-    @patch('src.bot.handlers.user_exists')
+    @patch('src.db.database.user_exists')
     @patch('src.bot.handlers.bot')
     def test_login_command_not_logged_in(self, mock_bot, mock_user_exists, mock_message):
         """Test /login command for new user"""
@@ -91,7 +91,7 @@ class TestBotLogic:
         # Verify login instructions were sent
         mock_bot.send_message.assert_called_once()
         call_args = mock_bot.send_message.call_args
-        assert "login link" in call_args[0][1].lower()
+        assert "localhost:5000/auth/123456" in call_args[0][1].lower()
 
     @patch('src.db.database.DB_PATH', '/tmp/test.db')
     @patch('src.bot.handlers.user_exists')
