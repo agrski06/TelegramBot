@@ -1,6 +1,6 @@
 import os
 import threading
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
 from apscheduler.schedulers.background import BackgroundScheduler
 from src.api.twitter_client import TwitterManager
 from src.bot.handlers import bot, send_digest
@@ -11,7 +11,8 @@ from src.db.database import (
     delete_oauth_session,
     save_user_tokens,
     get_all_users,
-    get_user_token
+    get_user_token,
+    user_exists,
 )
 from datetime import datetime, timedelta
 
@@ -30,26 +31,16 @@ def home():
 
 @app.route('/auth/<chat_id>')
 def initiate_auth(chat_id):
-    """Initiate OAuth flow for a user"""
+    """Initiate OAuth flow for a user. Redirect the browser to Twitter's auth URL."""
     try:
         auth_url, state, code_verifier = tw_manager.create_oauth_session()
 
         # Save session to database
         save_oauth_session(state, chat_id, code_verifier)
 
-        # Send auth URL to user
-        bot.send_message(
-            chat_id,
-            f"Connect Your Twitter Account\n\n"
-            f"Click the link below to authorize:\n\n"
-            f"{auth_url}\n\n"
-            f"After authorizing, you'll be redirected back here."
-        )
+        # Redirect the browser directly to the Twitter authorization URL
+        return redirect(auth_url)
 
-        return jsonify({
-            "status": "success",
-            "message": "Authorization link sent to Telegram"
-        })
     except Exception as e:
         return jsonify({
             "status": "error",
@@ -131,6 +122,25 @@ def callback():
             "❌ Authentication failed. Please try /login again."
         )
         return f"❌ Authentication error: {str(e)}", 500
+
+# Public helper used by the bot tests
+def handle_login(message):
+    """Handle /login request invoked from the Telegram bot tests or bot code."""
+    chat_id = str(message.chat.id)
+
+    if user_exists(chat_id):
+        bot.send_message(chat_id, "✅ You're already logged in! Use /feed to get your tweets.")
+        return
+
+    base_url = os.getenv("BASE_URL", "http://localhost:5000")
+    if base_url.endswith("/"):
+        base_url = base_url[:-1]
+    auth_endpoint = f"{base_url}/auth/{chat_id}"
+
+    bot.send_message(
+        chat_id,
+        f"🔐 To connect your Twitter account, click here:\n\n{auth_endpoint}"
+    )
 
 # Scheduler Task
 def daily_coffee_break():

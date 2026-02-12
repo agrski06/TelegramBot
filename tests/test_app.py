@@ -46,21 +46,22 @@ class TestFlaskApp:
 
     @patch('src.app.bot')
     def test_initiate_auth_success(self, mock_bot, client):
-        """Test initiating OAuth flow"""
+        """Test initiating OAuth flow - now expects an HTTP redirect to Twitter auth URL"""
         with patch('src.app.tw_manager') as mock_tw_manager:
             # Mock OAuth session creation
             mock_tw_manager.create_oauth_session.return_value = (
-                "https://twitter.com/oauth/authorize?...",
+                "https://twitter.com/oauth/authorize?code=abc",
                 "test_state_123",
                 "test_verifier"
             )
 
             response = client.get('/auth/123456')
 
-            assert response.status_code == 200
-            data = json.loads(response.data)
-            assert data['status'] == 'success'
-            mock_bot.send_message.assert_called_once()
+            # We now redirect the user's browser to Twitter's auth URL
+            assert response.status_code == 302
+            assert response.headers['Location'] == "https://twitter.com/oauth/authorize?code=abc"
+            # No Telegram message should be sent from the Flask endpoint itself
+            mock_bot.send_message.assert_not_called()
 
     @patch('src.app.bot')
     def test_initiate_auth_error(self, mock_bot, client):
@@ -215,6 +216,49 @@ class TestFlaskApp:
 
                 # Should attempt both users despite error
                 assert mock_tw_manager.fetch_home_timeline.call_count == 2
+
+    @patch('src.app.bot')
+    def test_handle_login_already_logged_in(self, mock_bot):
+        """Test /login handler when user already logged in"""
+        with patch('src.db.database.DB_PATH', self.path):
+            from src.db.database import init_db, save_user_tokens
+            from src.app import handle_login
+
+            init_db()
+            # Save user token
+            save_user_tokens("123456", "test_token", None, None)
+
+            from unittest.mock import MagicMock
+            mock_message = MagicMock()
+            mock_message.chat.id = 123456
+
+            handle_login(mock_message)
+
+            # Verify message about already being logged in
+            mock_bot.send_message.assert_called_once()
+            call_args = mock_bot.send_message.call_args
+            assert "already logged in" in call_args[0][1]
+
+    @patch('src.app.bot')
+    def test_handle_login_new_user(self, mock_bot):
+        """Test /login handler for new user"""
+        with patch('src.db.database.DB_PATH', self.path):
+            from src.db.database import init_db
+            from src.app import handle_login
+
+            init_db()
+
+            with patch.dict('os.environ', {'BASE_URL': 'http://localhost:5000'}):
+                from unittest.mock import MagicMock
+                mock_message = MagicMock()
+                mock_message.chat.id = 123456
+
+                handle_login(mock_message)
+
+                # Verify auth URL was sent
+                mock_bot.send_message.assert_called_once()
+                call_args = mock_bot.send_message.call_args
+                assert "http://localhost:5000/auth/123456" in call_args[0][1]
 
     @patch('src.app.bot')
     def test_callback_token_without_expires_in(self, mock_bot, client):
