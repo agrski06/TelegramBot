@@ -1,6 +1,5 @@
 import os
 import threading
-import logging
 from flask import Flask, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from src.api.twitter_client import TwitterManager
@@ -16,7 +15,6 @@ from src.db.database import (
 )
 from datetime import datetime, timedelta
 
-logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 tw_manager = TwitterManager()
@@ -164,30 +162,6 @@ def daily_coffee_break():
             continue
 
     print("Daily coffee break completed!")
-
-# Register login handler with bot
-@bot.message_handler(commands=['login'])
-def handle_login(message):
-    """Handle /login command"""
-    chat_id = str(message.chat.id)
-    logger.info(f"Login request received from chat_id: {chat_id}")
-    from src.db.database import user_exists
-
-    if user_exists(chat_id):
-        logger.info(f"User {chat_id} already logged in")
-        bot.send_message(chat_id, "✅ You're already logged in! Use /feed to get your tweets.")
-        return
-
-    # Generate auth URL
-    base_url = os.getenv("BASE_URL", "http://localhost:5000")
-    auth_endpoint = f"{base_url}/auth/{chat_id}"
-    logger.info(f"Generated auth endpoint for {chat_id}: {auth_endpoint}")
-
-    bot.send_message(
-        chat_id,
-        f"🔐 To connect your Twitter account, click here:\n\n{auth_endpoint}"
-    )
-    logger.info(f"Sent login auth endpoint to {chat_id}")
 
 if __name__ == "__main__":
     # Initialize database
