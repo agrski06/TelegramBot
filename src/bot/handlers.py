@@ -51,6 +51,8 @@ def login_command(message):
 
     # Generate auth URL
     base_url = os.getenv("BASE_URL", "http://localhost:5000")
+    if base_url.endswith("/"):
+        base_url = base_url[:-1]
     auth_endpoint = f"{base_url}/auth/{chat_id}"
     logger.info(f"Generated auth endpoint for {chat_id}: {auth_endpoint}")
 
