@@ -1,0 +1,11 @@
+python-dotenv
+pyTelegramBotAPI
+xdk
+Flask
+APScheduler
+requests
+oauthlib
+requests-oauthlib
+pytest
+pytest-cov
+pytest-mock
