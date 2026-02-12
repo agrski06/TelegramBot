@@ -48,11 +48,10 @@ class TwitterManager:
             # Note: XDK's home timeline endpoint
             response = client.users.get_timeline(
                 id=user_id,
-                max_results=min(max_results, 100)
+                max_results=max_results
             )
-
-            if response.data:
-                tweets = response.data[:max_results]
+            print(response)
+            return response
         except Exception as e:
             print(f"Error fetching home timeline: {e}")
 
