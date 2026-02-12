@@ -51,7 +51,7 @@ class TwitterManager:
                 max_results=max_results
             )
             for tweet in response:
-                print(f"Fetched tweet: {tweet['text']}")
+                print(f"Fetched tweet: {tweet}")
                 tweets.append(tweet)
             return tweets
         except Exception as e:
