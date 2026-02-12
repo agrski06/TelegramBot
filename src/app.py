@@ -40,11 +40,10 @@ def initiate_auth(chat_id):
         # Send auth URL to user
         bot.send_message(
             chat_id,
-            f"🔐 *Connect Your Twitter Account*\n\n"
+            f"Connect Your Twitter Account\n\n"
             f"Click the link below to authorize:\n\n"
             f"{auth_url}\n\n"
-            f"After authorizing, you'll be redirected back here.",
-            parse_mode="Markdown"
+            f"After authorizing, you'll be redirected back here."
         )
 
         return jsonify({
