@@ -39,11 +39,10 @@ class TwitterManager:
         try:
             # Get the authenticated user's ID first
             user_response = client.users.get_me()
-            print(f"Authenticated user: {user_response.data}")
             if not user_response.data:
                 return tweets
 
-            user_id = user_response.data.id
+            user_id = user_response.data.get("id")
 
             # Fetch reverse chronological home timeline
             # Note: XDK's home timeline endpoint
@@ -56,13 +55,6 @@ class TwitterManager:
                 tweets = response.data[:max_results]
         except Exception as e:
             print(f"Error fetching home timeline: {e}")
-            # Fallback: try to get user's own tweets if timeline fails
-            try:
-                user_tweets = client.posts.get_user_posts(user_id=user_id, max_results=max_results)
-                if user_tweets.data:
-                    tweets = user_tweets.data[:max_results]
-            except Exception as fallback_error:
-                print(f"Fallback also failed: {fallback_error}")
 
         return tweets
 
