@@ -46,8 +46,8 @@ class TwitterManager:
 
             # Fetch reverse chronological home timeline
             # Note: XDK's home timeline endpoint
-            response = client.posts.timeline_reverse_chronological(
-                user_id=user_id,
+            response = client.users.get_timeline(
+                id=user_id,
                 max_results=min(max_results, 100)
             )
 

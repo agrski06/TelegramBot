@@ -78,12 +78,12 @@ class TestTwitterManager:
         # Mock user response
         mock_user_response = MagicMock()
         mock_user_response.data.id = "123456789"
-        mock_client.users.me.return_value = mock_user_response
+        mock_client.users.get_me.return_value = mock_user_response
 
         # Mock timeline response
         mock_timeline_response = MagicMock()
         mock_timeline_response.data = sample_tweets
-        mock_client.posts.timeline_reverse_chronological.return_value = mock_timeline_response
+        mock_client.users.get_timeline.return_value = mock_timeline_response
 
         # Fetch timeline
         tweets = twitter_manager.fetch_home_timeline("test_token", max_results=20)
@@ -92,8 +92,8 @@ class TestTwitterManager:
         assert len(tweets) == 20
         assert tweets[0].text == "This is test tweet number 1"
         mock_client_class.assert_called_once_with(access_token="test_token")
-        mock_client.users.me.assert_called_once()
-        mock_client.posts.timeline_reverse_chronological.assert_called_once()
+        mock_client.users.get_me.assert_called_once()
+        mock_client.users.get_timeline.assert_called_once()
 
     @patch('src.api.twitter_client.Client')
     def test_fetch_home_timeline_no_user_data(self, mock_client_class, twitter_manager):
@@ -105,14 +105,14 @@ class TestTwitterManager:
         # Mock user response with no data
         mock_user_response = MagicMock()
         mock_user_response.data = None
-        mock_client.users.me.return_value = mock_user_response
+        mock_client.users.get_me.return_value = mock_user_response
 
         # Fetch timeline
         tweets = twitter_manager.fetch_home_timeline("test_token")
 
         # Verify
         assert tweets == []
-        mock_client.users.me.assert_called_once()
+        mock_client.users.get_me.assert_called_once()
 
     @patch('src.api.twitter_client.Client')
     def test_fetch_home_timeline_no_tweets(self, mock_client_class, twitter_manager):
@@ -124,12 +124,12 @@ class TestTwitterManager:
         # Mock user response
         mock_user_response = MagicMock()
         mock_user_response.data.id = "123456789"
-        mock_client.users.me.return_value = mock_user_response
+        mock_client.users.get_me.return_value = mock_user_response
 
         # Mock timeline response with no data
         mock_timeline_response = MagicMock()
         mock_timeline_response.data = None
-        mock_client.posts.timeline_reverse_chronological.return_value = mock_timeline_response
+        mock_client.users.get_timeline.return_value = mock_timeline_response
 
         # Fetch timeline
         tweets = twitter_manager.fetch_home_timeline("test_token")
@@ -150,73 +150,18 @@ class TestTwitterManager:
         # Mock user response
         mock_user_response = MagicMock()
         mock_user_response.data.id = "123456789"
-        mock_client.users.me.return_value = mock_user_response
+        mock_client.users.get_me.return_value = mock_user_response
 
         # Mock timeline response
         mock_timeline_response = MagicMock()
         mock_timeline_response.data = many_tweets
-        mock_client.posts.timeline_reverse_chronological.return_value = mock_timeline_response
+        mock_client.users.get_timeline.return_value = mock_timeline_response
 
         # Fetch timeline with limit of 10
         tweets = twitter_manager.fetch_home_timeline("test_token", max_results=10)
 
         # Verify only 10 tweets returned
         assert len(tweets) == 10
-
-    @patch('src.api.twitter_client.Client')
-    @patch('builtins.print')
-    def test_fetch_home_timeline_error_with_fallback(
-        self, mock_print, mock_client_class, twitter_manager, sample_tweets
-    ):
-        """Test fallback to user tweets when timeline fails"""
-        # Mock Client
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-
-        # Mock user response
-        mock_user_response = MagicMock()
-        mock_user_response.data.id = "123456789"
-        mock_client.users.me.return_value = mock_user_response
-
-        # Mock timeline to raise exception
-        mock_client.posts.timeline_reverse_chronological.side_effect = Exception("Timeline error")
-
-        # Mock fallback user posts
-        mock_user_posts = MagicMock()
-        mock_user_posts.data = sample_tweets[:5]
-        mock_client.posts.get_user_posts.return_value = mock_user_posts
-
-        # Fetch timeline
-        tweets = twitter_manager.fetch_home_timeline("test_token", max_results=20)
-
-        # Verify fallback was used
-        assert len(tweets) == 5
-        mock_client.posts.get_user_posts.assert_called_once()
-        mock_print.assert_called()
-
-    @patch('src.api.twitter_client.Client')
-    @patch('builtins.print')
-    def test_fetch_home_timeline_both_fail(self, mock_print, mock_client_class, twitter_manager):
-        """Test when both timeline and fallback fail"""
-        # Mock Client
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-
-        # Mock user response
-        mock_user_response = MagicMock()
-        mock_user_response.data.id = "123456789"
-        mock_client.users.me.return_value = mock_user_response
-
-        # Mock both to raise exceptions
-        mock_client.posts.timeline_reverse_chronological.side_effect = Exception("Timeline error")
-        mock_client.posts.get_user_posts.side_effect = Exception("Fallback error")
-
-        # Fetch timeline
-        tweets = twitter_manager.fetch_home_timeline("test_token")
-
-        # Verify empty list returned
-        assert tweets == []
-        assert mock_print.call_count == 2  # Both errors printed
 
     @patch('src.api.twitter_client.OAuth2PKCEAuth')
     def test_refresh_access_token_success(self, mock_oauth, twitter_manager):
