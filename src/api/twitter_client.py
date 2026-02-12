@@ -34,7 +34,6 @@ class TwitterManager:
     def fetch_home_timeline(self, access_token, max_results=20):
         """Fetch tweets from user's home timeline/feed"""
         client = Client(access_token=access_token)
-        tweets = []
 
         try:
             # Get the authenticated user's ID first
@@ -55,7 +54,6 @@ class TwitterManager:
         except Exception as e:
             print(f"Error fetching home timeline: {e}")
 
-        return tweets
 
     def refresh_access_token(self, refresh_token):
         """Refresh the access token using refresh token"""

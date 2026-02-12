@@ -85,6 +85,7 @@ def feed_command(message):
 
     # Fetch tweets
     tweets = tw_manager.fetch_home_timeline(token_data['access_token'], max_results=20)
+    print(tweets)
     send_digest(chat_id, tweets)
 
 def send_digest(chat_id, tweets):
