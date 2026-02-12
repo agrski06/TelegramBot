@@ -38,7 +38,8 @@ class TwitterManager:
 
         try:
             # Get the authenticated user's ID first
-            user_response = client.users.get_me(["id"])
+            user_response = client.users.get_me()
+            print(f"Authenticated user: {user_response.data}")
             if not user_response.data:
                 return tweets
 
